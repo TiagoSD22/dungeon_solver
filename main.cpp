@@ -7,20 +7,20 @@ protected:
     Room* rightNeighbor;
     Room* lowerNeighbor;
 public:
-    virtual int get_points() = 0;
+    virtual int getPoints() = 0;
 
-    Room* get_rightNeighbor() {
+    Room(int p, Room* rn, Room* ln) {
+        points = std::abs(p);
+        rightNeighbor = rn;
+        lowerNeighbor = ln;
+    }
+
+    Room* getRightNeighbor() {
         return rightNeighbor;
     }
 
-    Room* get_lowerNeighbor() {
+    Room* getLowerNeighbor() {
         return lowerNeighbor;
-    }
-
-    Room(int p, Room* rn, Room* ln) {
-        points = p;
-        rightNeighbor = rn;
-        lowerNeighbor = ln;
     }
 
     void addRightNeighbor(Room* rn) {
@@ -36,22 +36,40 @@ public:
 
 
 class Knight {
-    int min_hp;
+    int hp;
 
 public:
     Knight() {
-        min_hp = 1;
+        hp = 1;
+    }
+
+    int getHp() {
+        return hp;
     }
 
     void visit(Room* room) {
-        min_hp += room->get_points();
+        hp += room->getPoints();
+    }
+
+    static Room* decideNextRoom(Room* currentRoom) {
+        Room* rightNeighborRoom = currentRoom->getRightNeighbor();
+        Room* lowerNeighborRoom = currentRoom->getLowerNeighbor();
+
+        bool noRightNeighborRoom = nullptr == rightNeighborRoom;
+        bool lowerNeighborRoomIsGreater = lowerNeighborRoom->getPoints() > rightNeighborRoom->getPoints();
+
+        if (noRightNeighborRoom || lowerNeighborRoomIsGreater) {
+            return lowerNeighborRoom;
+        }
+
+        return rightNeighborRoom;
     }
 };
 
 
 class ThreatRoom : public Room {
 public:
-    int get_points() override {
+    int getPoints() override {
         return points * -1;
     }
 
@@ -61,7 +79,7 @@ public:
 
 class PowerUpRoom : public Room {
     public:
-    int get_points() override {
+    int getPoints() override {
         return points;
     }
 
@@ -70,7 +88,7 @@ class PowerUpRoom : public Room {
 
 class NeutralRoom : public Room {
     public:
-    int get_points() override {
+    int getPoints() override {
         return 0;
     }
 
@@ -135,12 +153,47 @@ public:
             }
         }
     }
+
+    Room* getInitialRoom() {
+        return rooms[0][0];
+    }
+
+    Room* getPrincessRoom() {
+        return rooms[rows - 1][cols - 1];
+    }
+};
+
+class DungeonSolver {
+    Dungeon* dungeon;
+    Knight* knight;
+
+public:
+    DungeonSolver(Dungeon* dungeon, Knight* knight) {
+        this->dungeon = dungeon;
+        this->knight = knight;
+    }
+
+    int solve() {
+        Room* initialRoom = dungeon->getInitialRoom();
+        Room* princessRoom = dungeon->getPrincessRoom();
+        Room* currentRoom = initialRoom;
+
+        do {
+            knight->visit(currentRoom);
+            currentRoom = knight->decideNextRoom(currentRoom);
+        } while (currentRoom != princessRoom);
+
+        knight->visit(currentRoom);
+        return knight->getHp();
+    }
 };
 
 
 int main() {
     Knight* knight = new Knight();
     Dungeon* dungeon = new Dungeon({{-2,-3,3},{-5,-10,1},{10,30,-5}});
-
+    DungeonSolver dungeonSolver(dungeon, knight);
+    int result = dungeonSolver.solve();
+    std::cout << result << std::endl;
     return 0;
 }
