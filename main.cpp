@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <limits>
+
+#define INF std::numeric_limits<int>::max()
 
 class Room {
 protected:
@@ -37,18 +40,64 @@ public:
 
 class Knight {
     int hp;
+    int totalDmgReceived;
+    int totalPowerUpReceived;
+    int min_hp;
 
 public:
     Knight() {
         hp = 0;
+        totalDmgReceived = 0;
+        totalPowerUpReceived = 0;
+        min_hp = 1;
     }
 
     int getHp() {
         return hp;
     }
 
+    int getTotalDmgReceived() {
+        return totalDmgReceived;
+    }
+
+    int getTotalPowerUpReceived() {
+        return totalPowerUpReceived;
+    }
+
+    int getMinHp() {
+        return min_hp;
+    }
+
+    void resetStatus(){
+        hp = 0;
+        totalDmgReceived = 0;
+        totalPowerUpReceived = 0;
+        min_hp = 1;
+    }
+
     void visit(Room* room) {
+        if(room->getPoints() < 0){
+            totalDmgReceived += room->getPoints();
+        }
+        else if(room->getPoints() > 0){
+            totalPowerUpReceived += room->getPoints();
+        }
+
         hp += room->getPoints();
+        if (hp <= 0){
+            //min_hp = std::abs(hp) + 1;
+
+            if (totalDmgReceived != 0) {
+                if (totalPowerUpReceived < std::abs(totalDmgReceived)){
+                    min_hp = std::abs(totalPowerUpReceived + totalDmgReceived) + 1; //dmg is negative, then + instead of -
+                    hp = min_hp + totalDmgReceived + totalPowerUpReceived;
+                    //return min_hp;
+                }
+            }
+            else {
+                min_hp = std::abs(totalDmgReceived) + 1;
+            }
+        }
     }
 
     static Room* decideNextRoom(Room* currentRoom) {
@@ -163,6 +212,10 @@ public:
     Room* getPrincessRoom() {
         return rooms[rows - 1][cols - 1];
     }
+
+    bool isSingleRoom(){
+        return rows == 1 && cols == 1;
+    }
 };
 
 class DungeonSolver {
@@ -175,28 +228,47 @@ public:
         this->knight = knight;
     }
 
+    int recursiveSolver(Room* currentRoom, Knight k){
+        if(nullptr != currentRoom){
+            Room* princessRoom = dungeon->getPrincessRoom();
+
+            k.visit(currentRoom);
+            if (currentRoom == princessRoom){
+                *knight = k;
+                return knight->getMinHp();
+            }
+
+            int hpMinByRight = recursiveSolver(currentRoom->getRightNeighbor(), k);
+            int hpMinByLower = recursiveSolver(currentRoom->getLowerNeighbor(), k);
+
+            return std::min(hpMinByRight, hpMinByLower);
+        }
+        else{
+            return INF;
+        }
+    }
+
     int solve() {
-        Room* initialRoom = dungeon->getInitialRoom();
-        Room* princessRoom = dungeon->getPrincessRoom();
-        Room* currentRoom = initialRoom;
-
-        do {
-            knight->visit(currentRoom);
-            currentRoom = knight->decideNextRoom(currentRoom);
-        } while (currentRoom != princessRoom && nullptr != currentRoom);
-
-        if (nullptr != currentRoom) {
-            knight->visit(currentRoom);
+        if (!dungeon->isSingleRoom()) {
+            Room* initialRoom = dungeon->getInitialRoom();
+            return recursiveSolver(initialRoom, *knight);
         }
 
-        return std::abs(knight->getHp()) + 1;
+        Room* initialRoom = dungeon->getInitialRoom();
+        knight->visit(initialRoom);
+
+        return knight->getMinHp();
     }
 };
 
 
 int main() {
-    //std::vector<std::vector<int>> input = {{0}}; //{{-2,-3,3},{-5,-10,1},{10,30,-5}};
-    std::vector<std::vector<int>> input = {{-2,-3,3},{-5,-10,1},{10,30,-5}};
+    //std::vector<std::vector<int>> input = {{0}}; //expected 1
+    std::vector<std::vector<int>> input = {{-2,-3,3},{-5,-10,1},{10,30,-5}}; //expected 7
+    //std::vector<std::vector<int>> input = {{2,1},{1,-1}}; //expected 1
+    //std::vector<std::vector<int>> input = {{-3,5}}; //expected 4
+    //std::vector<std::vector<int>> input = {{1,-3,3},{0,-2,0},{-3,-3,-3}}; //expected 3
+    //std::vector<std::vector<int>> input = {{0,-5},{0,0}}; //expected 1
 
     Knight* knight = new Knight();
     Dungeon* dungeon = new Dungeon(input);
