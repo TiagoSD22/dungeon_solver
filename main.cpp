@@ -100,9 +100,11 @@ public:
         cols = dungeon[0].size();
 
         rooms.resize(rows);
-
         for (size_t i = 0; i < rows; i++) {
             rooms[i].resize(cols, nullptr);
+        }
+
+        for (size_t i = 0; i < rows; i++) {
             for (size_t j = 0; j < cols; j++) {
                 Room* currentRoom = rooms[i][j];
                 Room* rightNeighborRoom = nullptr;
@@ -116,6 +118,7 @@ public:
                     rightNeighborRoom = rooms[i][j + 1];
                     if (nullptr == rightNeighborRoom) {
                         rightNeighborRoom = createRoom(dungeon[i][j + 1]);
+                        rooms[i][j + 1] = rightNeighborRoom;
                     }
                 }
 
@@ -123,6 +126,7 @@ public:
                     lowerNeighborRoom = rooms[i + 1][j];
                     if (nullptr == lowerNeighborRoom) {
                         lowerNeighborRoom = createRoom(dungeon[i + 1][j]);
+                        rooms[i + 1][j] = lowerNeighborRoom;
                     }
                 }
                 currentRoom->addRightNeighbor(rightNeighborRoom);
