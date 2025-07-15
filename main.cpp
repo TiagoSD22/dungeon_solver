@@ -78,7 +78,9 @@ class NeutralRoom : public Room {
 };
 
 class Dungeon {
-    std::vector<Room*> rooms;
+    size_t rows;
+    size_t cols;
+    std::vector<std::vector<Room*>> rooms;
 
     static Room* createRoom(int roomPoints) {
         if (roomPoints < 0) {
@@ -94,22 +96,38 @@ class Dungeon {
     }
 public:
     Dungeon(std::vector<std::vector<int>> dungeon) {
+        rows = dungeon.size();
+        cols = dungeon[0].size();
 
-        for (size_t i = 0; i < dungeon.size(); i++) {
-            for (size_t j = 0; j < dungeon[i].size(); j++) {
-                Room*currentRoom = createRoom(dungeon[i][j]);
+        rooms.resize(rows);
+
+        for (size_t i = 0; i < rows; i++) {
+            rooms[i].resize(cols, nullptr);
+            for (size_t j = 0; j < cols; j++) {
+                Room* currentRoom = rooms[i][j];
                 Room* rightNeighborRoom = nullptr;
                 Room* lowerNeighborRoom = nullptr;
 
-                if (j < dungeon[i].size() - 1) {
-                    rightNeighborRoom = createRoom(dungeon[i][j + 1]);
+                if (nullptr == currentRoom) {
+                    currentRoom = createRoom(dungeon[i][j]);
                 }
 
-                if (i < dungeon.size() - 1) {
-                    lowerNeighborRoom = createRoom(dungeon[i + 1][j]);
+                if (j < cols - 1) {
+                    rightNeighborRoom = rooms[i][j + 1];
+                    if (nullptr == rightNeighborRoom) {
+                        rightNeighborRoom = createRoom(dungeon[i][j + 1]);
+                    }
                 }
 
-
+                if (i < rows - 1) {
+                    lowerNeighborRoom = rooms[i + 1][j];
+                    if (nullptr == lowerNeighborRoom) {
+                        lowerNeighborRoom = createRoom(dungeon[i + 1][j]);
+                    }
+                }
+                currentRoom->addRightNeighbor(rightNeighborRoom);
+                currentRoom->addLowerNeighbor(lowerNeighborRoom);
+                rooms[i][j] = currentRoom;
             }
         }
     }
