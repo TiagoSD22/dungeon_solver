@@ -40,7 +40,7 @@ class Knight {
 
 public:
     Knight() {
-        hp = 1;
+        hp = 0;
     }
 
     int getHp() {
@@ -54,15 +54,17 @@ public:
     static Room* decideNextRoom(Room* currentRoom) {
         Room* rightNeighborRoom = currentRoom->getRightNeighbor();
         Room* lowerNeighborRoom = currentRoom->getLowerNeighbor();
-
-        bool noRightNeighborRoom = nullptr == rightNeighborRoom;
-        bool lowerNeighborRoomIsGreater = lowerNeighborRoom->getPoints() > rightNeighborRoom->getPoints();
-
-        if (noRightNeighborRoom || lowerNeighborRoomIsGreater) {
+        if(nullptr == rightNeighborRoom){
             return lowerNeighborRoom;
         }
+        if(nullptr == lowerNeighborRoom){
+            return rightNeighborRoom;
+        }
+        if(rightNeighborRoom->getPoints() > lowerNeighborRoom->getPoints()){
+            return rightNeighborRoom;
+        }
 
-        return rightNeighborRoom;
+        return lowerNeighborRoom;
     }
 };
 
@@ -181,19 +183,27 @@ public:
         do {
             knight->visit(currentRoom);
             currentRoom = knight->decideNextRoom(currentRoom);
-        } while (currentRoom != princessRoom);
+        } while (currentRoom != princessRoom && nullptr != currentRoom);
 
-        knight->visit(currentRoom);
-        return knight->getHp();
+        if (nullptr != currentRoom) {
+            knight->visit(currentRoom);
+        }
+
+        return std::abs(knight->getHp()) + 1;
     }
 };
 
 
 int main() {
+    //std::vector<std::vector<int>> input = {{0}}; //{{-2,-3,3},{-5,-10,1},{10,30,-5}};
+    std::vector<std::vector<int>> input = {{-2,-3,3},{-5,-10,1},{10,30,-5}};
+
     Knight* knight = new Knight();
-    Dungeon* dungeon = new Dungeon({{-2,-3,3},{-5,-10,1},{10,30,-5}});
+    Dungeon* dungeon = new Dungeon(input);
     DungeonSolver dungeonSolver(dungeon, knight);
+
     int result = dungeonSolver.solve();
     std::cout << result << std::endl;
+
     return 0;
 }
