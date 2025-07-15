@@ -23,6 +23,14 @@ public:
         lowerNeighbor = ln;
     }
 
+    void addRightNeighbor(Room* rn) {
+        rightNeighbor = rn;
+    }
+
+    void addLowerNeighbor(Room* ln) {
+        lowerNeighbor = ln;
+    }
+
     virtual ~Room() {}
 };
 
@@ -60,18 +68,47 @@ class PowerUpRoom : public Room {
     PowerUpRoom(int p, Room* rn, Room* ln) : Room(p, rn, ln) {}
 };
 
+class NeutralRoom : public Room {
+    public:
+    int get_points() override {
+        return 0;
+    }
+
+    NeutralRoom(Room* rn, Room* ln) : Room(0, rn, ln) {}
+};
+
 class Dungeon {
     std::vector<Room*> rooms;
 
-    Room* createRoom(int roomPoints, int rightNeighborPoints, int leftNeighborPoints) {
+    static Room* createRoom(int roomPoints) {
         if (roomPoints < 0) {
-            ThreatRoom currentRoom(roomPoints, nullptr, nullptr);
+            return new ThreatRoom(roomPoints, nullptr, nullptr);
         }
+
+        if (roomPoints == 0) {
+            return new NeutralRoom(nullptr, nullptr);
+        }
+
+        return new PowerUpRoom(roomPoints, nullptr, nullptr);
+
     }
 public:
     Dungeon(std::vector<std::vector<int>> dungeon) {
+
         for (size_t i = 0; i < dungeon.size(); i++) {
             for (size_t j = 0; j < dungeon[i].size(); j++) {
+                Room*currentRoom = createRoom(dungeon[i][j]);
+                Room* rightNeighborRoom = nullptr;
+                Room* lowerNeighborRoom = nullptr;
+
+                if (j < dungeon[i].size() - 1) {
+                    rightNeighborRoom = createRoom(dungeon[i][j + 1]);
+                }
+
+                if (i < dungeon.size() - 1) {
+                    lowerNeighborRoom = createRoom(dungeon[i + 1][j]);
+                }
+
 
             }
         }
@@ -80,6 +117,8 @@ public:
 
 
 int main() {
+    Knight* knight = new Knight();
+    Dungeon* dungeon = new Dungeon({{-2,-3,3},{-5,-10,1},{10,30,-5}});
 
     return 0;
 }
